@@ -1,0 +1,6 @@
+*~
+.idea
+bib.json
+build/**/*
+doc
+tmp

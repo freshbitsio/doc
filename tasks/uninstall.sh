@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo rm -f /usr/local/bin/doc
+sudo rm -f ~/src/go/bin/doc

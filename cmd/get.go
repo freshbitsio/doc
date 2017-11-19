@@ -1,8 +1,15 @@
-// See the LICENSE file for license information.
-
+//-----------------------------------------------------------------------------
+// get command module
+// Retrieve remote resources to the local storage.
+//
+// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
+// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
+// information.
+//-----------------------------------------------------------------------------
 package cmd
 
 import (
+	"doc/data"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -11,7 +18,7 @@ import (
 )
 
 var depth uint8
-var queue []string
+//var queue []string
 var save bool
 
 // getCmd represents the get command
@@ -33,13 +40,13 @@ func getFile (uri string) ([]byte, error) {
 	client := http.Client{
 		Timeout: time.Second * 2,
 	}
-	req, err := http.NewRequest(http.MethodGet, ServiceApiEndpoint, nil)
+	req, err := http.NewRequest(http.MethodGet, data.ServiceApiEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	// identify the client to the search api
-	req.Header.Set("User-Agent", "doc-client-" + VersionIdentifier)
+	req.Header.Set("User-Agent", "doc-client-" + data.VersionIdentifier)
 
 	// build the search query
 	q := req.URL.Query()
@@ -68,6 +75,7 @@ func getMetadata () {
 
 }
 
+// Initialize the module.
 func init() {
 	RootCmd.AddCommand(getCmd)
 	//getCmd.SetUsageTemplate("This is the template")

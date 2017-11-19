@@ -1,0 +1,60 @@
+{
+  "_links": {
+    "self": "http://example.com/search?",
+    "prev": "http://example.com/search?offset=0",
+    "next": "http://example.com/search?offset=100"
+  },
+  "count": 10,
+  "limit": 100,
+  "offset": 0,
+  "docs": [
+    {
+      "title": "Open Bibliography for Science, Technology and Medicine",
+      "author":[
+        {"name": "Richard Jones"},
+        {"name": "Mark MacGillivray"},
+        {"name": "Peter Murray-Rust"},
+        {"name": "Jim Pitman"},
+        {"name": "Peter Sefton"},
+        {"name": "Ben O'Steen"},
+        {"name": "William Waites"}
+      ],
+      "type": "article",
+      "year": "2011",
+      "journal": {"name": "Journal of Cheminformatics"},
+      "link": [
+        {"url":"http://www.jcheminf.com/content/3/1/47"},
+        {"download":"http://davismarques.com/priv/doc/doc-47.pdf"}
+      ],
+      "identifier": [
+        {"type":"doi","id":"10.1186/1758-2946-3-47"},
+        {"type":"doc","id":"doc:local-identifier-47"},
+        {"type":"sha1","id":"year-author-title-47"}
+      ]
+    },
+    {
+      "title": "Open Bibliography for Science, Technology and Medicine",
+      "author":[
+        {"name": "Richard Jones"},
+        {"name": "Mark MacGillivray"},
+        {"name": "Peter Murray-Rust"},
+        {"name": "Jim Pitman"},
+        {"name": "Peter Sefton"},
+        {"name": "Ben O'Steen"},
+        {"name": "William Waites"}
+      ],
+      "type": "article",
+      "year": "2012   ",
+      "journal": {"name": "Journal of Cheminformatics"},
+      "link": [
+        {"url":"http://www.jcheminf.com/content/3/1/49"},
+        {"download":"http://davismarques.com/priv/doc/doc-49.pdf"}
+      ],
+      "identifier": [
+        {"type":"doi","id":"10.1186/1758-2946-3-49"},
+        {"type":"doc","id":"doc:local-identifier-49"},
+        {"type":"sha1","id":"year-author-title-49"}
+      ]
+    }
+  ]
+}

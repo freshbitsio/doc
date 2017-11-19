@@ -74,23 +74,6 @@ type Record struct {
 	Identifier []Identifier`json:"identifier"`
 }
 
-type SearchResults struct {
-	Comments string 		  `json:"comments"`
-	Links  SearchResultsLinks `json:"_links"`
-	Count  uint8              `json:"count"`
-	Limit  uint8              `json:"limit"`
-	Offset uint8              `json:"offset"`
-	Docs   []Record           `json:"docs"`
-}
-
-type SearchResultsLinks struct {
-	TermsOfUse string `json:"termsofuse"`
-	Docs string `json:"documentation"`
-	Self string `json:"self"`
-	Next string `json:"next"`
-	Prev string `json:"prev"`
-}
-
 func GetAuthorsAsString (r Record) string {
 	var names []string
 	for i := 0; i< len(r.Author); i++ {

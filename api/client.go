@@ -4,59 +4,42 @@ import (
 	"doc/data"
 	"encoding/json"
 	"errors"
+	"github.com/go-restit/lzjson"
 	"io/ioutil"
 	"net/http"
-	//"strings"
 	"time"
+	"strings"
 )
 
 // Build the query portion of the request.
 func buildQuery (req *http.Request, args map[string]string) (*http.Request) {
-	// build the request query
 	q := req.URL.Query()
-	//if author != "" {
-	//	q.Add("author", author)
-	//}
-	//if doi != "" {
-	//	q.Add("doi", doi)
-	//}
-	//if source != "" {
-	//	q.Add("source", source)
-	//}
-	//if len(args) > 0 {
-	//	q.Add("q", strings.Join(args, "+"))
-	//}
-	q.Add("offset", "0")
-	q.Add("limit", "100")
-	q.Add("sort", "date,title")
+	// build query from map
+	for key, _ := range args {
+		if key == "q" {
+			parts := strings.Split(args[key]," ")
+			q.Add("q", strings.Join(parts, "+"))
+		} else {
+			q.Add(key, args[key])
+		}
+	}
 	req.URL.RawQuery = q.Encode()
-
 	return req
 }
 
 // Execute HTTP GET request.
-// var m map[string]string
-// make(map[string]Vertex)
-//m["Bell Labs"] = Vertex{
-//40.68433, -74.39967,
-//}
-//fmt.Println(m["Bell Labs"])
-func Get (url string, args map[string]string) ([]byte, error) {
+func Get (url string, args map[string]string) (*http.Response, error) {
 	// create a client
-	var body []byte
-	client, req, err := GetHttpClient(url)
-	if err != nil {
-		return body, err
-	}
+	client, req, _ := GetHttpClient(url)
 	// build the query
 	if len(args) > 0 {
 		req = buildQuery(req, args)
 	}
 	// execute the request
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		return body, getErr
-	}
+	return client.Do(req)
+}
+
+func getBody (res *http.Response) ([]byte, error) {
 	// get the response body
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
@@ -67,15 +50,21 @@ func Get (url string, args map[string]string) ([]byte, error) {
 	if isValid == false {
 		return body, errors.New("Invalid server response")
 	}
+	// return result
 	return body, nil
 }
 
-// Get client versions
+// Get client versions.
 func GetClientVersions () (data.ClientVersions, error) {
 	var args map[string]string
 	var versions = data.ClientVersions{}
-	// get client versions
-	body, err := Get(apiClientVersions, args)
+	// execute request
+	res, err := Get(apiClientVersions, args)
+	if err != nil {
+		return versions, err
+	}
+	// get the response body
+	body, err := getBody(res)
 	if err != nil {
 		return versions, err
 	}
@@ -84,15 +73,28 @@ func GetClientVersions () (data.ClientVersions, error) {
 	if unmarshalErr != nil {
 		return versions, unmarshalErr
 	}
+	// return result
 	return versions, nil
 }
 
-func GetDocs (args map[string]string) {
-
+// Search for documents matching specified criteria.
+func GetDocs (args map[string]string) (lzjson.Node, error) {
+	res, err := Get(apiDocs, args)
+	if err != nil {
+		return nil, err
+	}
+	js := lzjson.Decode(res.Body)
+	return js, nil
 }
 
-func GetDocsSources (args map[string]string) {
-
+// Search for sources matching specified criteria.
+func GetDocsSources (args map[string]string) (lzjson.Node, error) {
+	res, err := Get(apiDocSources, args)
+	if err != nil {
+		return nil, err
+	}
+	js := lzjson.Decode(res.Body)
+	return js, nil
 }
 
 // Get HTTP client

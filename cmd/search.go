@@ -9,25 +9,22 @@
 package cmd
 
 import (
-	"bytes"
 	"doc/api"
 	"doc/data"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/go-restit/lzjson"
-	"github.com/ryanuber/columnize"
+	//"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"net/http"
 	"log"
+	"github.com/ryanuber/columnize"
+	"bytes"
 )
 
 // command flags
 var abstract bool
 var author string
 var doi string
-var extended bool
+var extended string
 var format string
 var source string
 
@@ -49,11 +46,24 @@ var searchCmd = &cobra.Command{
 	  return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		r, err := search(args)
+		var query = make(map[string]string)
+		if author != "" {
+			query["author"] = author
+		}
+		if doi != "" {
+			query["doi"] = doi
+		}
+		if extended != "" {
+			query["extended"] = extended
+		}
+		if format != "" {
+			query["format"] = format
+		}
+		res, err := search(query)
 		if err != nil {
 			log.Fatal(err)
 		}
-		prettyColumnPrint(r)
+		prettyColumnPrint(res)
 	},
 }
 
@@ -63,35 +73,35 @@ func init() {
 	searchCmd.PersistentFlags().BoolVarP(&abstract, "abstract", "b", false, "Show abstract")
 	searchCmd.PersistentFlags().StringVarP(&author,"author", "a", "","Author")
 	searchCmd.PersistentFlags().StringVarP(&doi, "doi", "d", "","Digital object identifier")
-	searchCmd.PersistentFlags().BoolVarP(&extended, "extended", "e", false, "Show extended results list")
-	searchCmd.PersistentFlags().StringVarP(&format, "format", "f", "apa", "Display format")
+	//searchCmd.PersistentFlags().BoolVarP(&extended, "extended", "e", false, "Show extended results list")
+	searchCmd.PersistentFlags().StringVarP(&format, "format", "f", "bibjson", "Display format")
 	searchCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "Publication source or name")
 }
 
 // Pretty print search resultsObject to standard output
-func prettyColumnPrint(r data.SearchResults) {
+func prettyColumnPrint(res lzjson.Node) {
+	//count := res.Get("count").String()
+	//limit := res.Get("limit").String()
+	//fmt.Println("\nShowing %s of %s documents", limit, count)
+	fmt.Println("\nShowing 1 of 1 documents")
+	docs := res.Get("docs")
 	output := []string{
 		"ID | TITLE | AUTHOR | DATE | PUBLICATION",
 	}
-	for i := 0; i < len(r.Docs); i++ {
-		d := r.Docs[i]
+	for i:=0; i < docs.Len(); i++ {
+		d := docs.GetN(i)
 		var line bytes.Buffer
-		line.WriteString(data.GetUri(d))
+		line.WriteString(d.Get("url").String())
 		line.WriteString(" | ")
-		line.WriteString( d.Title)
+		line.WriteString( d.Get("title").String())
 		line.WriteString(" | ")
-		line.WriteString(data.GetAuthorsAsString(d))
+		line.WriteString("Lead author")
+		//line.WriteString(data.GetAuthorsAsString(d))
 		line.WriteString(" | ")
-		line.WriteString(d.Year)
+		line.WriteString(d.Get("year").String())
 		line.WriteString(" | ")
 		line.WriteString("Publication Name")
-		//for j := 0; j < len(d.Keywords); j++ {
-		//	line.WriteString(d.Keywords[j])
-		//	if (j + 1) < len(d.Keywords) {
-		//		line.WriteString(" ")
-		//	}
-		//}
-		//output = append(output, line.String())
+		output = append(output, line.String())
 	}
 	c := columnize.SimpleFormat(output)
 	fmt.Println(c)
@@ -114,54 +124,8 @@ func printCompactResultsListing () {}
 func printFullResultsListing () {}
 
 // Execute the search request against the API
-func search (args []string) (data.SearchResults, error) {
-	// search results template
-	results := data.SearchResults{}
-
-	client, req, err := api.GetHttpClient(data.ServiceApiEndpoint + "/docs")
-	if err != nil {
-		return results, err
-	}
-
-	// execute the request
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		return results, getErr
-	}
-
-	// TODO check the response code
-	// get the response body
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		return results, readErr
-	}
-
-	// ensure that the body contains valid json
-	isValid := json.Valid(body)
-	if isValid == false {
-		return results, errors.New("Invalid server response")
-	}
-
-	// marshall the json into our struct
-	unmarshalErr := json.Unmarshal(body, &results)
-	if unmarshalErr != nil {
-		return results, unmarshalErr
-	}
-
-	fmt.Println("Found", len(results.Docs), "documents")
-
-	// return search results
-	return results, nil
-}
-
-// Execute search against remote API.
-func searchJson (args []string) (data.SearchResults, error) {
-	resp, _ := http.Get("http://foobarapi.com/things")
-	json := lzjson.Decode(resp.Body)
-	fmt.Println(json)
-
-	results := data.SearchResults{}
-	return results, nil
+func search (args map[string]string) (lzjson.Node, error) {
+	return api.GetDocs(args)
 }
 
 // Truncate string to maximum length

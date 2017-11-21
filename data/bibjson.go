@@ -100,3 +100,7 @@ func GetDownloadLink (r Record) string {
 func GetUri (r Record) string {
 	return r.Id
 }
+
+func RemoveRecord (r Record) (bool, error) {
+	return false, nil
+}

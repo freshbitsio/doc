@@ -6,7 +6,7 @@ type Resolver struct {
 }
 
 // User preference file, which is stored in ~/.doc/preferences.json
-type UserPrefereces struct {
+type UserPreferences struct {
 	Fullname string `json:"fullname"'`
 	Location string `json:"location"'`
 	Email string `json:"email"'`

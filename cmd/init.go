@@ -15,31 +15,22 @@ import (
 	"bufio"
 	"doc/data"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/mgutz/ansi"
 	"github.com/nu7hatch/gouuid"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	//"log"
+	"log"
 	"os"
-	"os/user"
-	//"path/filepath"
-	"time"
-	//"path"
 	"os/exec"
-	//"strings"
-	//"bytes"
+	"os/user"
+	"path"
+	"time"
+	"strings"
 )
 
 var ProjectPath string
-
-// User configuration file
-type userConfiguration struct {
-	fullname string
-	email string
-	location string
-	organization string
-	citationStyle string
-}
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -64,31 +55,61 @@ var initCmd = &cobra.Command{
 	Example: `  doc init
   doc init --path=/path/to/project/folder`,
 	Run: func(cmd *cobra.Command, args []string) {
-		initGitRepo("/tmp/test")
-		//metadata, metadataErr := promptForMetadata()
-		//if metadataErr != nil {
-		//	log.Fatal(metadataErr)
-		//	panic(metadataErr)
-		//}
-		//
-		//dir, metadataErr := filepath.Abs(filepath.Dir(os.Args[0]))
-		//if metadataErr != nil {
-		//	log.Fatal(metadataErr)
-		//}
-		//
-		//ensureErr := ensureProjectDirectory(dir)
-		//if ensureErr != nil {
-		//	log.Fatal(ensureErr)
-		//	panic("Unable to create project directory")
-		//}
-		//
-		//filePath := path.Join(dir, "bib.json")
-		//writeErr := writeBibliography(filePath, metadata)
-		//if writeErr != nil {
-		//	fmt.Println("failed to write project bibliography")
-		//	fmt.Println(writeErr)
-		//}
-		//fmt.Println("\n  Wrote", filePath, " \n ")
+		// TODO is it an existing doc repo?
+		// TODO is it an existing git repo?
+		// TODO are you sure you want to init?
+		fmt.Println(`
+  This utility will create a new bib.json file in the current directory and
+  then ask you to provide values for a minimum number of fields. We'll try to
+  use some sensible defaults for the remainder.
+
+  See "doc init --help" for more details on the contents of the bib.json.
+
+  Use "doc get" afterwards to retrieve all the documents identified in the
+  bibliography.
+
+  Press ^C at any time to quit.`)
+
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = initGitRepo(dir)
+		if err != nil {
+			fmt.Println("Failed to initialize Git repository")
+			os.Exit(1)
+		} else {
+			fmt.Println("  Initialized empty Git repository\n")
+		}
+
+		err = writeGitIgnore(dir)
+		if err != nil {
+			fmt.Println("Failed to write .gitignore")
+			os.Exit(1)
+		}
+
+		err = initBibJson(dir)
+		if err != nil {
+			fmt.Println("Failed to write bib.json")
+			os.Exit(1)
+		} else {
+			fmt.Println("  \nWrote bib.json file\n")
+		}
+
+		cfg, err := promptForUserData()
+		if err != nil {
+			fmt.Println("Failed to collect user configuration")
+			os.Exit(1)
+		}
+
+		err = writeUserConfiguration(dir, cfg)
+		if err != nil {
+			fmt.Println("Failed to write user preferences file")
+			os.Exit(1)
+		} else {
+			fmt.Println("  Wrote preferences to ~/.docrc")
+		}
+		fmt.Println("\n  Done")
 	},
 }
 
@@ -103,12 +124,36 @@ func ensureProjectDirectory (dirPath string) error {
 	return nil
 }
 
+// Initialize bib.json file in the specified directory.
+func initBibJson (dir string) error {
+	metadata, err := promptForMetadata()
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+
+	err = ensureProjectDirectory(dir)
+	if err != nil {
+		return errors.New("Unable to create project directory")
+	}
+
+	filePath := path.Join(dir, "bib.json")
+	err = writeBibJSON(filePath, metadata)
+	if err != nil {
+		fmt.Println("failed to write project bibliography")
+		fmt.Println(err)
+	}
+
+	return nil
+}
+
+// Initialize Git repository in the specified directory.
 func initGitRepo (dirPath string) (error) {
-	out, err := exec.Command("git", "log").Output()
+	// TODO revise so that we can specify the cwd for the command
+	_, err := exec.Command("git", "init").Output()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("The date is %s\n", out)
 	return nil
 }
 
@@ -134,19 +179,6 @@ func init() {
 
 // Prompt user to provide project metadata
 func promptForMetadata () (data.CollectionMetadata, error) {
-	fmt.Println(`
-This utility will create a new bib.json file in the current directory and
-then ask you to provide values for a minimum number of fields. We'll try to
-use some sensible defaults for the remainder.
-
-See "doc init --help" for more details on the contents of the bib.json.
-
-Use "doc get" afterwards to retrieve all the documents identified in the
-bibliography.
-
-Press ^C at any time to quit.
-`)
-
 	reader := bufio.NewReader(os.Stdin)
 	meta := data.CollectionMetadata{}
 
@@ -174,13 +206,13 @@ Press ^C at any time to quit.
 	meta.Modified = time.Now().UTC().Format(time.RFC3339)
 
 	// override defaults with user specified values
-	fmt.Print("  Project or collection name: (Bibliography) ")
+	fmt.Print(ansi.Color("  Project or collection name: (Bibliography) ", "blue"))
 	name, _ := reader.ReadString('\n')
 
-	fmt.Print("  Description: (Project bibliography.) ")
+	fmt.Print(ansi.Color("  Description: (Project bibliography.) ", "blue"))
 	desc, _ := reader.ReadString('\n')
 
-	fmt.Print("  Owner: (" + usr.Username + "@" + host + ") ")
+	fmt.Print(ansi.Color("  Owner: (" + usr.Username + "@" + host + ") ", "blue"))
 	owner, _ := reader.ReadString('\n')
 
 	meta.Collection = name
@@ -191,10 +223,31 @@ Press ^C at any time to quit.
 }
 
 // Save user metadata into a local configuration file
-func promptForUserData () {}
+func promptForUserData () (data.UserPreferences, error) {
+	// TODO try to get the user name and email from the git config first before asking for it
+	reader := bufio.NewReader(os.Stdin)
+	meta := data.UserPreferences{}
 
-// Write bibliography file.
-func writeBibliography (path string, metadata data.CollectionMetadata) error {
+	fmt.Print(ansi.Color("  Fullname: ", "blue"))
+	fullname, err := reader.ReadString('\n')
+	if err != nil {
+		return meta, err
+	}
+
+	fmt.Print(ansi.Color("  Email: ", "blue"))
+	email, err := reader.ReadString('\n')
+	if err != nil {
+		return meta, err
+	}
+
+	meta.Fullname = strings.Trim(fullname, "\n")
+	meta.Email = strings.Trim(email, "\n")
+
+	return meta, nil
+}
+
+// Write bib.json bibliography file.
+func writeBibJSON(path string, metadata data.CollectionMetadata) error {
 	data, err := json.MarshalIndent(metadata, "", "    ")
 	if err != nil {
 		panic("Couldn't convert object to JSON")
@@ -202,9 +255,18 @@ func writeBibliography (path string, metadata data.CollectionMetadata) error {
 	return ioutil.WriteFile("bib.json", data, os.FileMode(0666))
 }
 
-func writeGitIgnore () {}
+func writeGitIgnore (dir string) error {
+	var gitignore = `*~
+lib/**/*
+tmp`
+	return ioutil.WriteFile(".gitignore", []byte(gitignore), os.FileMode(0666))
+}
 
 // Write user configuration file.
-func writeUserConfiguration (path string, config string) error {
-	return nil
+func writeUserConfiguration (dir string, config data.UserPreferences) error {
+	data, err := json.MarshalIndent(config, "", "    ")
+	if err != nil {
+		panic("Couldn't convert user preferences to JSON")
+	}
+	return ioutil.WriteFile("~/.doc/preferences.json", data, os.FileMode(0666))
 }

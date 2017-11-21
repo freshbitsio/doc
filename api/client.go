@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var ClientTimeout = time.Second * 15
+var ClientTimeout = time.Second * 30
 
 // Build the query portion of the request.
 func buildQuery (req *http.Request, args map[string]string) (*http.Request) {

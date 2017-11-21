@@ -10,28 +10,30 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"github.com/mgutz/ansi"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
-
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "doc",
-	Short: "The research publication manager",
-	Long: `      _
+var longDescription = `      _
      | |
    __| | ___   ___
   / _  |/ _ \ / __|
  | (_| | (_) | (__
   \__,_|\___/ \___|
 
-  The research publication manager.
+  The research package manager.
 
-  Discover, download, and share collections of research publications
-  easily. Make your research reproducible with trivial effort.`,
+  Discover, download, and share collections of research publications and
+  datasets easily. Make your research reproducible with trivial effort.`
+
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
+	Use:   "doc",
+	Short: "The research publication manager",
+	Long: ansi.Color(longDescription, "blue"),
 	//Run: func(cmd *cobra.Command, args []string) { },
 }
 
@@ -47,7 +49,6 @@ func Execute() {
 // Initialize the module
 func init() { 
 	cobra.OnInitialize(initConfig)
-	//RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.doc.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.

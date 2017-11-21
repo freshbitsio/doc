@@ -4,12 +4,15 @@ import (
 	"doc/data"
 	"encoding/json"
 	"errors"
+	//"fmt"
 	"github.com/go-restit/lzjson"
 	"io/ioutil"
 	"net/http"
 	"time"
 	"strings"
 )
+
+var ClientTimeout = time.Second * 15
 
 // Build the query portion of the request.
 func buildQuery (req *http.Request, args map[string]string) (*http.Request) {
@@ -36,6 +39,7 @@ func Get (url string, args map[string]string) (*http.Response, error) {
 		req = buildQuery(req, args)
 	}
 	// execute the request
+	//fmt.Println(req.URL.String())
 	return client.Do(req)
 }
 
@@ -77,6 +81,15 @@ func GetClientVersions () (data.ClientVersions, error) {
 	return versions, nil
 }
 
+// Get extended document metadata.
+func GetDoc (urn string, args map[string]string) ([]byte, error) {
+	res, err := Get(apiDocs + "/" + urn, args)
+	if err != nil {
+		return nil, err
+	}
+	return getBody(res)
+}
+
 // Search for documents matching specified criteria.
 func GetDocs (args map[string]string) (lzjson.Node, error) {
 	res, err := Get(apiDocs, args)
@@ -101,7 +114,7 @@ func GetDocsSources (args map[string]string) (lzjson.Node, error) {
 func GetHttpClient (url string) (http.Client, *http.Request, error) {
 	// create a new http client and request object
 	client := http.Client{
-		Timeout: time.Second * 5,
+		Timeout: ClientTimeout,
 	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

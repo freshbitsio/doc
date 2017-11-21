@@ -3,5 +3,12 @@
   "location": "Melbourne, Australia",
   "email": "dmarques@unimelb.edu.au",
   "organization": "University of Melbourne",
-  "citationStyle": "IEEE"
+  "resolvers": [
+    {
+      "name": "datapakio/doc",
+      "config": {
+        "url": "https://api.datapak.io/v1/"
+      }
+    }
+  ]
 }

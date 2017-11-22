@@ -26,8 +26,9 @@ import (
 	"os/exec"
 	"os/user"
 	"path"
-	"time"
 	"strings"
+	"time"
+	"github.com/mitchellh/go-homedir"
 )
 
 var ProjectPath string
@@ -63,60 +64,82 @@ var initCmd = &cobra.Command{
   then ask you to provide values for a minimum number of fields. We'll try to
   use some sensible defaults for the remainder.
 
-  See "doc init --help" for more details on the contents of the bib.json.
-
-  Use "doc get" afterwards to retrieve all the documents identified in the
-  bibliography.
-
-  Press ^C at any time to quit.`)
+  Press ^C at any time to quit.
+`)
 
 		dir, err := os.Getwd()
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		cfg, usr, err := promptForUserInput()
+		if err != nil {
+			fmt.Print("Failed to capture input")
+			os.Exit(1)
+		}
+
+		fmt.Println("")
+
 		err = initGitRepo(dir)
 		if err != nil {
-			fmt.Println("Failed to initialize Git repository")
+			fmt.Println("  \u2717 Failed to initialize Git repository")
 			os.Exit(1)
 		} else {
-			fmt.Println("  Initialized empty Git repository\n")
+			fmt.Println("  \u2713 Initialized Git repository")
 		}
 
-		err = writeGitIgnore(dir)
+		err = writeGitignore(dir)
 		if err != nil {
-			fmt.Println("Failed to write .gitignore")
-			os.Exit(1)
-		}
-
-		err = initBibJson(dir)
-		if err != nil {
-			fmt.Println("Failed to write bib.json")
+			fmt.Println("  \u2717 Failed to write .gitignore")
 			os.Exit(1)
 		} else {
-			fmt.Println("  \nWrote bib.json file\n")
+			fmt.Println("  \u2713 Wrote .gitignore")
 		}
 
-		cfg, err := promptForUserData()
+		err = initBibJson(dir, cfg)
 		if err != nil {
-			fmt.Println("Failed to collect user configuration")
-			os.Exit(1)
-		}
-
-		err = writeUserConfiguration(dir, cfg)
-		if err != nil {
-			fmt.Println("Failed to write user preferences file")
+			fmt.Println("  \u2717 Failed to write bib.json")
 			os.Exit(1)
 		} else {
-			fmt.Println("  Wrote preferences to ~/.docrc")
+			fmt.Println("  \u2713 Wrote bib.json")
 		}
-		fmt.Println("\n  Done")
+
+		err = writeReadme(dir)
+		if err != nil {
+			fmt.Println("  \u2717 Failed to write README.md")
+			os.Exit(1)
+		} else {
+			fmt.Println("  \u2713 Wrote README.md")
+		}
+
+		err = writeLicense(dir)
+		if err != nil {
+			fmt.Println("  \u2717 Failed to write LICENSE")
+			os.Exit(1)
+		} else {
+			fmt.Println("  \u2713 Wrote LICENSE")
+		}
+
+		// TODO ensure that user preferences folder exists
+		err = writeUserConfiguration(usr)
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("  \u2717 Failed to write user preferences file")
+			os.Exit(1)
+		} else {
+			fmt.Println("  \u2713 Wrote preferences to ~/.docrc/preferences.json")
+		}
+
+		// TODO do first commit?
+
+		fmt.Println("\n  \u1F3C6 Success! \n")
 	},
 }
 
 // Ensure that the project directory exists.
-func ensureProjectDirectory (dirPath string) error {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.MkdirAll(dirPath, 0600)
+func ensureDirectory(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.MkdirAll(dir, 0755)
 		if err != nil {
 			return err
 		}
@@ -125,14 +148,8 @@ func ensureProjectDirectory (dirPath string) error {
 }
 
 // Initialize bib.json file in the specified directory.
-func initBibJson (dir string) error {
-	metadata, err := promptForMetadata()
-	if err != nil {
-		log.Fatal(err)
-		panic(err)
-	}
-
-	err = ensureProjectDirectory(dir)
+func initBibJson (dir string, metadata data.CollectionMetadata) error {
+	err := ensureDirectory(dir)
 	if err != nil {
 		return errors.New("Unable to create project directory")
 	}
@@ -148,7 +165,7 @@ func initBibJson (dir string) error {
 }
 
 // Initialize Git repository in the specified directory.
-func initGitRepo (dirPath string) (error) {
+func initGitRepo (dir string) (error) {
 	// TODO revise so that we can specify the cwd for the command
 	_, err := exec.Command("git", "init").Output()
 	if err != nil {
@@ -158,8 +175,8 @@ func initGitRepo (dirPath string) (error) {
 }
 
 // Determine if the specified directory is a Git repository
-func isGitRepo (dirPath string) (bool, error) {
-	files, err := ioutil.ReadDir(dirPath)
+func isGitRepo (dir string) (bool, error) {
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return false, err
 	}
@@ -177,31 +194,36 @@ func init() {
 	initCmd.Flags().StringVarP(&ProjectPath, "path", "p", ".", "Path to project folder")
 }
 
-// Prompt user to provide project metadata
-func promptForMetadata () (data.CollectionMetadata, error) {
+// Prompt user for project metadata and user profile information
+func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error) {
+	// TODO try to get the user name and email from the git config first before asking for it
 	reader := bufio.NewReader(os.Stdin)
 	meta := data.CollectionMetadata{}
+	u := data.UserPreferences{}
 
-	usr, userErr := user.Current()
-	if userErr != nil {
-		panic(userErr)
+	username, err := user.Current()
+	if err != nil {
+		fmt.Print("Could not determine current user")
+		os.Exit(1)
 	}
 
 	host, hostErr := os.Hostname()
 	if hostErr != nil {
-		panic(hostErr)
+		fmt.Print("Could not determine hostname")
+		os.Exit(1)
 	}
 
 	uid, uuidErr := uuid.NewV4()
 	if uuidErr != nil {
-		panic(uuidErr)
+		fmt.Print("Could not generate project identifier")
+		os.Exit(1)
 	}
 
 	// default values
 	meta.Collection = "Bibliography"
 	meta.Description = "Project bibliography."
 	meta.Id = uid.String()
-	meta.Owner = usr.Username + "@" + host
+	meta.Owner = username.Username + "@" + host
 	meta.Created = time.Now().UTC().Format(time.RFC3339)
 	meta.Modified = time.Now().UTC().Format(time.RFC3339)
 
@@ -212,14 +234,23 @@ func promptForMetadata () (data.CollectionMetadata, error) {
 	fmt.Print(ansi.Color("  Description: (Project bibliography.) ", "blue"))
 	desc, _ := reader.ReadString('\n')
 
-	fmt.Print(ansi.Color("  Owner: (" + usr.Username + "@" + host + ") ", "blue"))
+	fmt.Print(ansi.Color("  Owner: (" + username.Username +  ") ", "blue"))
 	owner, _ := reader.ReadString('\n')
 
 	meta.Collection = name
 	meta.Description = desc
 	meta.Owner = owner
 
-	return meta, nil
+	fmt.Print(ansi.Color("  Email: (" + username.Username + "@" + host + ") ", "blue"))
+	email, err := reader.ReadString('\n')
+	if err != nil {
+		return meta, u, err
+	}
+
+	u.Fullname = strings.Trim(owner, "\n")
+	u.Email = strings.Trim(email, "\n")
+
+	return meta, u, nil
 }
 
 // Save user metadata into a local configuration file
@@ -248,25 +279,52 @@ func promptForUserData () (data.UserPreferences, error) {
 
 // Write bib.json bibliography file.
 func writeBibJSON(path string, metadata data.CollectionMetadata) error {
-	data, err := json.MarshalIndent(metadata, "", "    ")
+	bib, err := json.MarshalIndent(metadata, "", "    ")
 	if err != nil {
-		panic("Couldn't convert object to JSON")
+		fmt.Println("Couldn't convert object to JSON")
+		os.Exit(1)
 	}
-	return ioutil.WriteFile("bib.json", data, os.FileMode(0666))
+	return ioutil.WriteFile("bib.json", bib, os.FileMode(0666))
 }
 
-func writeGitIgnore (dir string) error {
-	var gitignore = `*~
-lib/**/*
-tmp`
-	return ioutil.WriteFile(".gitignore", []byte(gitignore), os.FileMode(0666))
+// Write default .gitignore file
+func writeGitignore(dir string) error {
+	f := path.Join(dir, ".gitignore")
+	return ioutil.WriteFile(f, []byte(data.DefaultGitignore), os.FileMode(0666))
+}
+
+// Write default LICENSE file
+func writeLicense (dir string) error {
+	f := path.Join(dir, "LICENSE")
+	return ioutil.WriteFile(f, []byte(data.DefaultLicense), os.FileMode(0666))
+}
+
+// Write default readme.md file
+func writeReadme (dir string) error {
+	f := path.Join(dir, "README.md")
+	return ioutil.WriteFile(f, []byte(data.DefaultReadme), os.FileMode(0666))
 }
 
 // Write user configuration file.
-func writeUserConfiguration (dir string, config data.UserPreferences) error {
-	data, err := json.MarshalIndent(config, "", "    ")
+func writeUserConfiguration (config data.UserPreferences) error {
+	home, err := homedir.Dir()
 	if err != nil {
-		panic("Couldn't convert user preferences to JSON")
+		fmt.Print("Could not determine user home")
+		os.Exit(1)
 	}
-	return ioutil.WriteFile("~/.doc/preferences.json", data, os.FileMode(0666))
+	// ensure the user config folder exists
+	f := path.Join(home, ".docrc")
+	err = ensureDirectory(f)
+	if err != nil {
+		fmt.Print("Could not create user configuration directory")
+		os.Exit(1)
+	}
+	// write configuration
+	f = path.Join(f, "preferences.json")
+	cfg, err := json.MarshalIndent(config, "", "    ")
+	if err != nil {
+		fmt.Println("Couldn't convert user preferences to JSON")
+		os.Exit(1)
+	}
+	return ioutil.WriteFile(f, cfg, os.FileMode(0666))
 }

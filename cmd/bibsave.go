@@ -25,7 +25,7 @@ var bibsaveCmd = &cobra.Command{
 This command assumes that you are using a single branch development approach
 and that all changes are made on the master branch.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		showStatus()
+		//showStatus()
 		addAllFiles()
 		commit()
 	},
@@ -38,7 +38,9 @@ func addAllFiles() {
 		fmt.Println("add files")
 		panic(err)
 	}
-	fmt.Printf("\n%s\n", out)
+	if VerboseOutput == true {
+		fmt.Printf("\n%s\n", out)
+	}
 }
 
 func commit() {

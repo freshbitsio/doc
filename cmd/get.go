@@ -9,12 +9,11 @@
 package cmd
 
 import (
-	"doc/data"
 	"fmt"
+	"github.com/cavaliercoder/grab"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"net/http"
 	"time"
+	"os"
 )
 
 var depth uint8
@@ -31,49 +30,48 @@ var getCmd = &cobra.Command{
 	},
 }
 
-// Enqueue download task
-func enqueue () {}
-
-// Get publication file
-func getFile (uri string) ([]byte, error) {
-	// create a new http client and request object
-	client := http.Client{
-		Timeout: time.Second * 2,
-	}
-	req, err := http.NewRequest(http.MethodGet, data.ServiceApiEndpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// identify the client to the search api
-	req.Header.Set("User-Agent", "doc-client-" + data.VersionIdentifier)
-
-	// build the search query
-	q := req.URL.Query()
-	q.Add("uri", uri)
-	req.URL.RawQuery = q.Encode()
-
-	// execute the request
-	// fmt.Println(req.URL.String())
-	res, getErr := client.Do(req)
-	if getErr != nil {
-		return nil, getErr
-	}
-
-	// get the response body
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		return nil, readErr
-	}
-
-	// TODO return mimetype
-	return body, nil
-}
-
 // Get publication metadata
-func getMetadata () {
+func getMetadata () {}
 
+func getResource(urn string) {
+	// create client
+	client := grab.NewClient()
+	req, _ := grab.NewRequest(".", "http://www.golang-book.com/public/pdf/gobook.pdf")
+
+	// start download
+	fmt.Printf("Downloading %v...\n", req.URL())
+	resp := client.Do(req)
+	fmt.Printf("  %v\n", resp.HTTPResponse.Status)
+
+	// start UI loop
+	t := time.NewTicker(500 * time.Millisecond)
+	defer t.Stop()
+
+	Loop:
+		for {
+			select {
+			case <-t.C:
+				fmt.Printf("  transferred %v / %v bytes (%.2f%%)\n",
+					resp.BytesComplete(),
+					resp.Size,
+					100*resp.Progress())
+
+			case <-resp.Done:
+				// download is complete
+				break Loop
+			}
+		}
+
+	// check for errors
+	if err := resp.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "Download failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Download saved to ./%v \n", resp.Filename)
 }
+
+func getResources (urns []string) {}
 
 // Initialize the module.
 func init() {

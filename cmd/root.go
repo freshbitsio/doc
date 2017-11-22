@@ -28,6 +28,7 @@ var longDescription = `      _
 
   Discover, download, and share collections of research publications and
   datasets easily. Make your research reproducible with trivial effort.`
+var VerboseOutput bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -49,6 +50,7 @@ func Execute() {
 // Initialize the module
 func init() { 
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().BoolVarP(&VerboseOutput, "verbose", "v", false, "Display additional logging messages")
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -35,5 +35,5 @@ func printLog () {
 
 // Initialize the module.
 func init() {
-	bibCmd.AddCommand(biblogCmd)
+	RootCmd.AddCommand(biblogCmd)
 }

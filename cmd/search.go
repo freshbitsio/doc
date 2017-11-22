@@ -12,6 +12,7 @@ import (
 	"doc/api"
 	"doc/data"
 	"fmt"
+	term "github.com/buger/goterm"
 	"github.com/go-restit/lzjson"
 	//"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
@@ -79,28 +80,54 @@ func init() {
 }
 
 // Pretty print search resultsObject to standard output
+// TODO get rid of lzjson
 func prettyColumnPrint(res lzjson.Node) {
+	// terminal width
+	termWidth := term.Width()
+
+	// TODO change the presentation strategy based on the screen dimensions
+	// if its narrow, use a stacked citation style approach
+	// it its wide, use a grid
+
+	var urnWidth = 32
+	var yearWidth = 6
+	var authorWidth = 32
+	var pubWidth = 32
+
+	// we'll make all columns except for the title column fixed with. the remaining space
+	// can be taken up by the title column. the title column has a minimum width of 24
+	var titleWidth = termWidth - (urnWidth + yearWidth + authorWidth + pubWidth)
+	if titleWidth < 24 {
+		titleWidth = 24
+	}
+
 	//count := res.Get("count").String()
 	//limit := res.Get("limit").String()
 	//fmt.Println("\nShowing %s of %s documents", limit, count)
 	fmt.Println("\nShowing 1 of 1 documents")
+
 	docs := res.Get("docs")
 	output := []string{
-		"ID | TITLE | AUTHOR | DATE | PUBLICATION",
+		"URN | TITLE | AUTHOR | DATE | PUBLICATION",
 	}
 	for i:=0; i < docs.Len(); i++ {
 		d := docs.GetN(i)
 		var line bytes.Buffer
-		line.WriteString(d.Get("url").String())
-		line.WriteString(" | ")
-		line.WriteString( d.Get("title").String())
-		line.WriteString(" | ")
-		line.WriteString("Lead author")
+		urn := truncateString(d.Get("url").String(), urnWidth)
+		title := truncateString(d.Get("title").String(), titleWidth)
+		author := "Doe, Jane"
+		year := d.Get("year").String()
+		publication := "Publication Name"
+		line.WriteString(urn)
+		line.WriteString("|")
+		line.WriteString(title)
+		line.WriteString("|")
+		line.WriteString(author)
 		//line.WriteString(data.GetAuthorsAsString(d))
-		line.WriteString(" | ")
-		line.WriteString(d.Get("year").String())
-		line.WriteString(" | ")
-		line.WriteString("Publication Name")
+		line.WriteString("|")
+		line.WriteString(year)
+		line.WriteString("|")
+		line.WriteString(publication)
 		output = append(output, line.String())
 	}
 	c := columnize.SimpleFormat(output)

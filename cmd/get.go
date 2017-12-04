@@ -1,10 +1,6 @@
 //-----------------------------------------------------------------------------
 // get command module
 // Retrieve remote resources to the local storage.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 package cmd
 
@@ -12,11 +8,12 @@ import (
 	"fmt"
 	"github.com/cavaliercoder/grab"
 	"github.com/spf13/cobra"
-	"time"
 	"os"
+	"time"
 )
 
 var depth uint8
+var downloadurl string
 //var queue []string
 var save bool
 
@@ -26,14 +23,16 @@ var getCmd = &cobra.Command{
 	Short: "Retrieve individual and collections of publications",
 	Long: `Download individual publications, and collections of publications to the current directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("get called")
+		// if a URL is not provided as an arg then get the list of resources from the bib file and download them
+		getResource("")
 	},
 }
 
 // Get publication metadata
 func getMetadata () {}
 
-func getResource(urn string) {
+// Download the resource.
+func getResource(url string) {
 	// create client
 	client := grab.NewClient()
 	req, _ := grab.NewRequest(".", "http://www.golang-book.com/public/pdf/gobook.pdf")
@@ -77,8 +76,8 @@ func getResources (urns []string) {}
 func init() {
 	RootCmd.AddCommand(getCmd)
 	//getCmd.SetUsageTemplate("This is the template")
-	getCmd.PersistentFlags().BoolVarP(&save,"save",  "s", false, "Save document to project")
-	getCmd.PersistentFlags().Uint8VarP(&depth,"depth",  "d", 0, "Retrieve cited references to specified depth. Maximum depth of three")
+	//getCmd.PersistentFlags().BoolVarP(&save,"save",  "s", false, "Save document to project")
+	//getCmd.PersistentFlags().Uint8VarP(&depth,"depth",  "d", 0, "Retrieve cited references to specified depth. Maximum depth of three")
 }
 
 // Print the download status to the console

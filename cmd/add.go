@@ -2,20 +2,16 @@
 // Add command module
 // Add publication by reference to the bib.json file contained in the root
 // folder of the current project.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 package cmd
 
 import (
 	"doc/api"
+	"doc/bib"
+	"errors"
 	"fmt"
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"os"
 	"time"
 	"strings"
 )
@@ -25,13 +21,15 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add publications to the current project",
 	Long: `Add publication references to the current project metadata file so that they can be retrieved later.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			var query = make(map[string]string)
-			addResource(args[0], query)
-		} else {
-			// error
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Requires one or more document identifiers")
 		}
+		return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		var query = make(map[string]string)
+		addResource(args[0], query)
 	},
 }
 
@@ -45,7 +43,7 @@ func addResource (urn string, args map[string]string) () {
 	resParsed, _ := gabs.ParseJSON(res)
 
 	// read the bib.json file
-	data, err := ioutil.ReadFile("bib.json")
+	data, err := bib.Read()
 	if err != nil {
 		fmt.Println("Unable to read bib.json file")
 		panic(err)
@@ -68,10 +66,12 @@ func addResource (urn string, args map[string]string) () {
 	jsonParsed.Set(time.Now().Local().Format(time.RFC3339), "modified")
 
 	// write the updated bib.json file
-	//fmt.Println("%s", jsonParsed.StringIndent("", "  "))
-	ioutil.WriteFile("bib.json", []byte(jsonParsed.StringIndent("", "  ")), os.FileMode(0666))
-
-	fmt.Println("Resource added")
+	err = bib.Write([]byte(jsonParsed.StringIndent("", "  ")))
+	if err != nil {
+		fmt.Println("Couldn't write updates to bib.json")
+	} else {
+		fmt.Println("Resource added")
+	}
 }
 
 func init() {

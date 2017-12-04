@@ -1,10 +1,6 @@
 //-----------------------------------------------------------------------------
 // Bib command module
 // This module manages changes to the bibliography file.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 package cmd
 
@@ -29,14 +25,4 @@ to quickly create a Cobra application.`,
 
 func init() {
 	RootCmd.AddCommand(bibCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// bibCmd.PersistentFlags().String("import", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// bibCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

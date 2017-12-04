@@ -1,10 +1,6 @@
 //-----------------------------------------------------------------------------
 // bib/push command module
 // Push changes from the local repository to the remote.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 package cmd
 

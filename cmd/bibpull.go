@@ -2,10 +2,6 @@
 // bib/pull command module
 // Retrieve changes from the Git remote and merge them into the local
 // repository.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 package cmd
 

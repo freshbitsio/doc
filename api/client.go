@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	//"fmt"
-	"github.com/go-restit/lzjson"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -43,6 +42,7 @@ func Get (url string, args map[string]string) (*http.Response, error) {
 	return client.Do(req)
 }
 
+// Get the response body.
 func getBody (res *http.Response) ([]byte, error) {
 	// get the response body
 	body, readErr := ioutil.ReadAll(res.Body)
@@ -58,7 +58,7 @@ func getBody (res *http.Response) ([]byte, error) {
 	return body, nil
 }
 
-// Get client versions.
+// Get the list of supported API clients.
 func GetClientVersions () (data.ClientVersions, error) {
 	var args map[string]string
 	var versions = data.ClientVersions{}
@@ -91,23 +91,21 @@ func GetDoc (urn string, args map[string]string) ([]byte, error) {
 }
 
 // Search for documents matching specified criteria.
-func GetDocs (args map[string]string) (lzjson.Node, error) {
+func GetDocs (args map[string]string) ([]byte, error) {
 	res, err := Get(apiDocs, args)
 	if err != nil {
 		return nil, err
 	}
-	js := lzjson.Decode(res.Body)
-	return js, nil
+	return getBody(res)
 }
 
 // Search for sources matching specified criteria.
-func GetDocsSources (args map[string]string) (lzjson.Node, error) {
+func GetDocsSources (args map[string]string) ([]byte, error) {
 	res, err := Get(apiDocSources, args)
 	if err != nil {
 		return nil, err
 	}
-	js := lzjson.Decode(res.Body)
-	return js, nil
+	return getBody(res)
 }
 
 // Get HTTP client

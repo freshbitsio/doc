@@ -3,10 +3,6 @@
 // A project is a file system directory that contains a BibJSON file named
 // bib.json in the top level directory. This module is used to initialize a
 // project by creating or resetting that top level file.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 
 package cmd
@@ -14,21 +10,21 @@ package cmd
 import (
 	"bufio"
 	"doc/data"
+	"doc/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/mgutz/ansi"
+	"github.com/mitchellh/go-homedir"
 	"github.com/nu7hatch/gouuid"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"os/user"
 	"path"
 	"strings"
 	"time"
-	"github.com/mitchellh/go-homedir"
 )
 
 var ProjectPath string
@@ -80,7 +76,7 @@ var initCmd = &cobra.Command{
 
 		fmt.Println("")
 
-		err = initGitRepo(dir)
+		err = utils.InitGitRepo(dir)
 		if err != nil {
 			fmt.Println("  \u2717 Failed to initialize Git repository")
 			os.Exit(1)
@@ -136,20 +132,9 @@ var initCmd = &cobra.Command{
 	},
 }
 
-// Ensure that the project directory exists.
-func ensureDirectory(dir string) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Initialize bib.json file in the specified directory.
 func initBibJson (dir string, metadata data.CollectionMetadata) error {
-	err := ensureDirectory(dir)
+	err := utils.EnsureDirectory(dir)
 	if err != nil {
 		return errors.New("Unable to create project directory")
 	}
@@ -162,30 +147,6 @@ func initBibJson (dir string, metadata data.CollectionMetadata) error {
 	}
 
 	return nil
-}
-
-// Initialize Git repository in the specified directory.
-func initGitRepo (dir string) (error) {
-	// TODO revise so that we can specify the cwd for the command
-	_, err := exec.Command("git", "init").Output()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Determine if the specified directory is a Git repository
-func isGitRepo (dir string) (bool, error) {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return false, err
-	}
-	for _, file := range files {
-		if file.IsDir() && file.Name() == ".git" {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 // Initialize the module.
@@ -314,7 +275,7 @@ func writeUserConfiguration (config data.UserPreferences) error {
 	}
 	// ensure the user config folder exists
 	f := path.Join(home, ".docrc")
-	err = ensureDirectory(f)
+	err = utils.EnsureDirectory(f)
 	if err != nil {
 		fmt.Print("Could not create user configuration directory")
 		os.Exit(1)

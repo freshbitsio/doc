@@ -1,10 +1,6 @@
 //-----------------------------------------------------------------------------
 // bib/save command module
 // Create a Git commit that saves the current state of the repository.
-//
-// Copyright (c) 2017 Davis Marques <dmarques@freshbits.io> and
-// Hossein Pursultani <hossein@freshbits.io> See the LICENSE file for license
-// information.
 //-----------------------------------------------------------------------------
 package cmd
 

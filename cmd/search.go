@@ -12,8 +12,8 @@ import (
 	term "github.com/buger/goterm"
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
-	"log"
 	"strings"
+	"os"
 )
 
 // command flags
@@ -26,17 +26,17 @@ var source string
 
 // searchCmd represents the search command
 var searchCmd = &cobra.Command{
-	Use:   "search [options] [search terms]",
+	Use:   "search [options] [source] [search terms]",
 	Short: "Search for publications",
 	Long:  `Search for publications by title, keyword, author, doi, and source.`,
-	Example: `  doc search deep learning
-  doc search --author=hinton neural networks
-  doc search --author="geoffrey hinton" neural networks
-  doc search --doi=10.1038/nature14539 // doesn't make sense
-  doc search --source=arxiv neural networks
-  doc search --source="conference machine learning" neural networks`,
+	Example: `  doc search dblp deep learning
+  doc search dblp --author=hinton neural networks
+  doc search arxiv --author="geoffrey hinton" neural networks
+  doc search doi 10.1038/nature14539
+  doc search sem neural networks
+  doc search --type=conference arvix neural networks`,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
+		if len(args) < 2 {
 			return errors.New("Requires one or more search terms")
 		}
 		return nil
@@ -47,9 +47,6 @@ var searchCmd = &cobra.Command{
 		if author != "" {
 			query["author"] = author
 		}
-		if doi != "" {
-			query["doi"] = doi
-		}
 		if extended != "" {
 			query["extended"] = extended
 		}
@@ -59,7 +56,8 @@ var searchCmd = &cobra.Command{
 		// execute the request
 		res, err := search(query)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Server error")
+			os.Exit(100)
 		}
 		// extract the raw string values that we want to present
 		docs := getFields(res)
@@ -85,28 +83,6 @@ func cleanStrings(data [][]string) [][]string {
 		}
 	}
 	return data
-}
-
-// Get the maximum column width for each field.
-func getMaximumColumnWidths(data [][]string) ([]int) {
-	urn := ""
-	title := ""
-	author := ""
-	year := ""
-	publication := ""
-
-	for i := 0; i < len(data); i++ {
-		line := data[i]
-		urn = longest(line[0], urn)
-		title = longest(line[1], title)
-		author = longest(line[2], author)
-		year = longest(line[3], year)
-		publication = longest(line[4], publication)
-	}
-
-	// set fixed maximum widths
-
-	return []int{len(urn), len(title), len(author), len(year), len(publication)}
 }
 
 // Extract fields from json records.
@@ -139,6 +115,28 @@ func getFields(data []byte) [][]string {
 	return lines
 }
 
+// Get the maximum column width for each field.
+func getMaximumColumnWidths(data [][]string) ([]int) {
+	urn := ""
+	title := ""
+	author := ""
+	year := ""
+	publication := ""
+
+	for i := 0; i < len(data); i++ {
+		line := data[i]
+		urn = longest(line[0], urn)
+		title = longest(line[1], title)
+		author = longest(line[2], author)
+		year = longest(line[3], year)
+		publication = longest(line[4], publication)
+	}
+
+	// set fixed maximum widths
+
+	return []int{len(urn), len(title), len(author), len(year), len(publication)}
+}
+
 // Return the longest string.
 func longest(s1 string, s2 string) string {
 	if len(s1) > len (s2) {
@@ -168,17 +166,19 @@ func padRight(str, pad string, length int) string {
 	}
 }
 
-// Pretty print search resultsObject to standard output
+// Pretty print search results to the console.
 func print(docs [][]string, count int, limit int, widths []int) {
+	columnSpacing := 2
+
 	// terminal width
 	termWidth := term.Width()
 	if termWidth == 0 {
-		termWidth = 200
+		termWidth = 120
 	}
 
 	// determine the column widths
 	// give any remaining space to the title column
-	widths[1] = termWidth - (widths[0] + widths[2] + widths[3] + widths[4] + 8)
+	widths[1] = termWidth - (widths[0] + widths[2] + widths[3] + widths[4] + (4 * columnSpacing))
 
 	fmt.Printf("\nShowing %v of %v documents\n", limit, count)
 

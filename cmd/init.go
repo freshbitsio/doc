@@ -128,7 +128,7 @@ var initCmd = &cobra.Command{
 
 		// TODO do first commit?
 
-		fmt.Println("\n  \u1F3C6 Success! \n")
+		fmt.Println("\n  \u270C Success! \n")
 	},
 }
 
@@ -191,21 +191,30 @@ func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error)
 	// override defaults with user specified values
 	fmt.Print(ansi.Color("  Project or collection name: (Bibliography) ", "blue"))
 	name, _ := reader.ReadString('\n')
+	if name == "\n" {
+		name = "Bibliography"
+	}
 
 	fmt.Print(ansi.Color("  Description: (Project bibliography.) ", "blue"))
 	desc, _ := reader.ReadString('\n')
+	if desc == "\n" {
+		desc = "Project bibliography."
+	}
 
 	fmt.Print(ansi.Color("  Owner: (" + username.Username +  ") ", "blue"))
 	owner, _ := reader.ReadString('\n')
+	if owner == "\n" {
+		owner = username.Username
+	}
 
 	meta.Collection = name
 	meta.Description = desc
 	meta.Owner = owner
 
 	fmt.Print(ansi.Color("  Email: (" + username.Username + "@" + host + ") ", "blue"))
-	email, err := reader.ReadString('\n')
-	if err != nil {
-		return meta, u, err
+	email, _ := reader.ReadString('\n')
+	if email == "\n" {
+		email = username.Username + "@" + host
 	}
 
 	u.Fullname = strings.Trim(owner, "\n")

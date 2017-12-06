@@ -11,6 +11,13 @@ import (
 	"strings"
 )
 
+// Publication and data source
+type Source interface {
+	Get (id string) ([]byte, error)
+	Info (id string) ([]byte, error)
+	Search (query string, args [][]string) ([]byte, error)
+}
+
 var ClientTimeout = time.Second * 30
 
 // Build the query portion of the request.
@@ -87,6 +94,9 @@ func GetDoc (urn string, args map[string]string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode >= 300 {
+		return nil, errors.New(res.Status)
+	}
 	return getBody(res)
 }
 
@@ -96,6 +106,9 @@ func GetDocs (args map[string]string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode >= 300 {
+		return nil, errors.New(res.Status)
+	}
 	return getBody(res)
 }
 
@@ -104,6 +117,9 @@ func GetDocsSources (args map[string]string) ([]byte, error) {
 	res, err := Get(apiDocSources, args)
 	if err != nil {
 		return nil, err
+	}
+	if res.StatusCode >= 300 {
+		return nil, errors.New(res.Status)
 	}
 	return getBody(res)
 }

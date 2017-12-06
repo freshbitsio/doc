@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"time"
 	"strings"
+	"os"
 )
 
 // addCmd represents the add command
@@ -37,16 +38,17 @@ var addCmd = &cobra.Command{
 func addResource (urn string, args map[string]string) () {
 	res, err := api.GetDoc(urn, args)
 	if err != nil {
-		fmt.Println("Client timed out while retrieving the resource")
-		panic(err)
+		fmt.Println("Resource not found")
+		os.Exit(100)
 	}
 	resParsed, _ := gabs.ParseJSON(res)
+	fmt.Println(resParsed.String())
 
 	// read the bib.json file
 	data, err := bib.Read()
 	if err != nil {
 		fmt.Println("Unable to read bib.json file")
-		panic(err)
+		os.Exit(90)
 	}
 	jsonParsed, _ := gabs.ParseJSON([]byte(data))
 

@@ -1,0 +1,5 @@
+#!/bin/bash
+DIR="$( cd "$(dirname "$0")/../" ; pwd -P)"
+
+$DIR/tasks/build
+$DIR/tasks/install

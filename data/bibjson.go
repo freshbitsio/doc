@@ -36,7 +36,7 @@ type CollectionMetadata struct {
 	Label string `json:"label"`
 	Modified string `json:"modified"`
 	Owner string `json:"owner"`
-	Records uint `json:"records"`
+	Records []Record `json:"records"`
 	Size uint `json:"size"`
 	Source string `json:"source"`
 }

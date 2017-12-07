@@ -137,13 +137,14 @@ func initBibJson (dir string, metadata data.CollectionMetadata) error {
 	err := utils.EnsureDirectory(dir)
 	if err != nil {
 		return errors.New("Unable to create project directory")
+		os.Exit(100)
 	}
 
 	filePath := path.Join(dir, "bib.json")
 	err = writeBibJSON(filePath, metadata)
 	if err != nil {
 		fmt.Println("failed to write project bibliography")
-		fmt.Println(err)
+		os.Exit(100)
 	}
 
 	return nil
@@ -187,6 +188,7 @@ func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error)
 	meta.Owner = username.Username + "@" + host
 	meta.Created = time.Now().UTC().Format(time.RFC3339)
 	meta.Modified = time.Now().UTC().Format(time.RFC3339)
+	meta.Records = []data.Record{}
 
 	// override defaults with user specified values
 	fmt.Print(ansi.Color("  Project or collection name: (Bibliography) ", "blue"))

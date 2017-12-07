@@ -13,7 +13,6 @@ import (
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
 	"time"
-	"strings"
 	"os"
 )
 
@@ -52,17 +51,8 @@ func addResource (urn string, args map[string]string) () {
 	}
 	jsonParsed, _ := gabs.ParseJSON([]byte(data))
 
-	// create a new record
-	id := strings.Trim(resParsed.S("id").String(), "\"")
-	title := strings.Trim(resParsed.S("title").String(), "\"")
-	year := strings.Trim(resParsed.S("year").String(), "\"")
-	record := gabs.New()
-	record.Set(id, "urn")
-	record.Set(title, "title")
-	record.Set(year, "year")
-
 	// append the record to the records field
-	jsonParsed.ArrayAppend(record.Data(), "records")
+	jsonParsed.ArrayAppend(resParsed.Data(), "records")
 
 	// update the last modified time
 	jsonParsed.Set(time.Now().Local().Format(time.RFC3339), "modified")

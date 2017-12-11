@@ -47,14 +47,17 @@ func download(url string, p string) error {
 		os.Exit(99)
 	}
 
-	dir := path.Join(cwd, "resources", p)
-	err = os.RemoveAll(dir)
+	dir := path.Join(cwd, "resources", filepath.Dir(p))
+	f := path.Join(cwd, "resources", p + ".pdf")
+
+	err = utils.EnsureDirectory(dir)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(99)
 	}
 
-	err = utils.EnsureDirectory(filepath.Dir(dir))
+	// remove existing file if present
+	err = os.RemoveAll(f)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(99)
@@ -62,7 +65,7 @@ func download(url string, p string) error {
 
 	// create client
 	client := grab.NewClient()
-	req, err := grab.NewRequest(dir, url)
+	req, err := grab.NewRequest(f, url)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(99)

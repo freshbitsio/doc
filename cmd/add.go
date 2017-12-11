@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"time"
 	"os"
+	"strings"
 )
 
 // addCmd represents the add command
@@ -28,9 +29,40 @@ var addCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		var query = make(map[string]string)
-		addResource(args[0], query)
+		if strings.Contains(args[0], "arxiv.org") {
+			AddArxivResource(args[0])
+		} else {
+			var query = make(map[string]string)
+			addResource(args[0], query)
+		}
 	},
+}
+
+// Add ARXIV resource.
+func AddArxivResource (s string) {
+	data, err := bib.Read()
+	if err != nil {
+		fmt.Println("Unable to read bib.json file")
+		os.Exit(90)
+	}
+	jsonParsed, _ := gabs.ParseJSON([]byte(data))
+
+	// add resource
+	var path = strings.Replace(s, "http://", "", 1)
+	path = strings.Replace(path, "arxiv.org", "arxiv", 1)
+	var url = strings.Replace(s, "/abs", "/pdf", 1) + ".pdf"
+	jsonParsed.S("resources").Set(url, path)
+
+	// update the last modified time
+	jsonParsed.Set(time.Now().Local().Format(time.RFC3339), "modified")
+
+	// write the updated bib.json file
+	err = bib.Write([]byte(jsonParsed.StringIndent("", "  ")))
+	if err != nil {
+		fmt.Println("Couldn't write updates to bib.json")
+	} else {
+		fmt.Println("Resource added")
+	}
 }
 
 // Add resource to project bib.json
@@ -41,7 +73,6 @@ func addResource (urn string, args map[string]string) () {
 		os.Exit(100)
 	}
 	resParsed, _ := gabs.ParseJSON(res)
-	fmt.Println(resParsed.String())
 
 	// read the bib.json file
 	data, err := bib.Read()

@@ -50,7 +50,7 @@ func Get (url string, args map[string]string) (*http.Response, error) {
 }
 
 // Get the response body.
-func getBody (res *http.Response) ([]byte, error) {
+func GetBody(res *http.Response) ([]byte, error) {
 	// get the response body
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
@@ -75,7 +75,7 @@ func GetClientVersions () (data.ClientVersions, error) {
 		return versions, err
 	}
 	// get the response body
-	body, err := getBody(res)
+	body, err := GetBody(res)
 	if err != nil {
 		return versions, err
 	}
@@ -97,7 +97,7 @@ func GetDoc (urn string, args map[string]string) ([]byte, error) {
 	if res.StatusCode >= 300 {
 		return nil, errors.New(res.Status)
 	}
-	return getBody(res)
+	return GetBody(res)
 }
 
 // Search for documents matching specified criteria.
@@ -109,7 +109,7 @@ func GetDocs (args map[string]string) ([]byte, error) {
 	if res.StatusCode >= 300 {
 		return nil, errors.New(res.Status)
 	}
-	return getBody(res)
+	return GetBody(res)
 }
 
 // Search for sources matching specified criteria.
@@ -121,7 +121,7 @@ func GetDocsSources (args map[string]string) ([]byte, error) {
 	if res.StatusCode >= 300 {
 		return nil, errors.New(res.Status)
 	}
-	return getBody(res)
+	return GetBody(res)
 }
 
 // Get HTTP client

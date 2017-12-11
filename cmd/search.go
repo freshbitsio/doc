@@ -7,9 +7,10 @@ package cmd
 import (
 	"bytes"
 	"doc/api"
+	arxiv "doc/api/arxiv"
+	"doc/utils"
 	"errors"
 	"fmt"
-	term "github.com/buger/goterm"
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
 	"strings"
@@ -26,20 +27,24 @@ var source string
 
 // searchCmd represents the search command
 var searchCmd = &cobra.Command{
-	Use:   "search [options] [source] [search terms]",
+	Use:   "search [source] [search terms]",
 	Short: "Search for publications",
 	Long:  `Search for publications by title, keyword, author, doi, and source.`,
 	Example: `  doc search dblp deep learning
   doc search dblp --author=hinton neural networks
   doc search arxiv --author="geoffrey hinton" neural networks
-  doc search doi 10.1038/nature14539
   doc search sem neural networks
-  doc search --type=conference arvix neural networks`,
+  doc search arvix neural networks --type=conference`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return errors.New("Requires one or more search terms")
+		} else {
+			options := []string{"arxiv","dblp","plos"}
+			if !utils.ContainsStr(options, args[0]) {
+				return errors.New("Unsupported source. Please specify one of arxiv, dblp, or plos.")
+			}
+			return nil
 		}
-		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// build the search query
@@ -54,35 +59,31 @@ var searchCmd = &cobra.Command{
 			query["format"] = format
 		}
 		// execute the request
-		res, err := search(query)
-		if err != nil {
-			fmt.Println("Server error")
-			os.Exit(100)
-		}
-		// extract the raw string values that we want to present
-		docs := getFields(res)
-		// clean up the strings
-		docs = cleanStrings(docs)
-		// determine the maximum column widths
-		maxwidths := getMaximumColumnWidths(docs)
-		// set fixed maximum widths
-		maxwidths[2] = 24
-		maxwidths[3] = 6
-		maxwidths[4] = 24
-		// print the documents to the terminal
-		print(docs,0,0, maxwidths)
-	},
-}
+		switch args[0] {
+		case "arxiv":
+			arxiv.Search("network", query)
+		case "dblp":
+			fmt.Println("dblp")
+		case "plos":
+			fmt.Println("plos")
+		default:
+			fmt.Println("default (arxiv)")
+			// default search service
+			res, err := api.GetDocs(query)
+			if err != nil {
+				fmt.Println("Unable to retrieve search results")
+				os.Exit(100)
+			}
 
-// Remove whitespace and punctuation from start and end of strings.
-func cleanStrings(data [][]string) [][]string {
-	for i := 0; i < len(data); i++ {
-		line := data[i]
-		for j := 0; j < len(line); j++ {
-			line[j] = strings.Trim(line[j], "\"")
+			// extract the raw string values that we want to present
+			docs := getFields(res)
+
+			// clean up the strings
+			docs = utils.CleanStrings(docs)
+
+			fmt.Println(docs)
 		}
-	}
-	return data
+	},
 }
 
 // Extract fields from json records.
@@ -93,7 +94,7 @@ func getFields(data []byte) [][]string {
 
 	for _, doc := range docs {
 		var line []string
-		urn := doc.S("url").String()
+		urn := doc.S("id").String()
 		title := doc.S("title").String()
 		var author bytes.Buffer
 		authors, _ := doc.S("authors").Children()
@@ -125,25 +126,16 @@ func getMaximumColumnWidths(data [][]string) ([]int) {
 
 	for i := 0; i < len(data); i++ {
 		line := data[i]
-		urn = longest(line[0], urn)
-		title = longest(line[1], title)
-		author = longest(line[2], author)
-		year = longest(line[3], year)
-		publication = longest(line[4], publication)
+		urn = utils.Longest(line[0], urn)
+		title = utils.Longest(line[1], title)
+		author = utils.Longest(line[2], author)
+		year = utils.Longest(line[3], year)
+		publication = utils.Longest(line[4], publication)
 	}
 
 	// set fixed maximum widths
 
 	return []int{len(urn), len(title), len(author), len(year), len(publication)}
-}
-
-// Return the longest string.
-func longest(s1 string, s2 string) string {
-	if len(s1) > len (s2) {
-		return s1
-	} else {
-		return s2
-	}
 }
 
 // Initialize the module
@@ -155,67 +147,4 @@ func init() {
 	//searchCmd.PersistentFlags().BoolVarP(&extended, "extended", "e", false, "Show extended results list")
 	searchCmd.PersistentFlags().StringVarP(&format, "format", "f", "bibjson", "Display format")
 	searchCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "Publication source or name")
-}
-
-func padRight(str, pad string, length int) string {
-	for {
-		str += pad
-		if len(str) > length {
-			return str[0:length]
-		}
-	}
-}
-
-// Pretty print search results to the console.
-func print(docs [][]string, count int, limit int, widths []int) {
-	columnSpacing := 2
-
-	// terminal width
-	termWidth := term.Width()
-	if termWidth == 0 {
-		termWidth = 120
-	}
-
-	// determine the column widths
-	// give any remaining space to the title column
-	widths[1] = termWidth - (widths[0] + widths[2] + widths[3] + widths[4] + (4 * columnSpacing))
-
-	fmt.Printf("\nShowing %v of %v documents\n", limit, count)
-
-	printColumns("URN", "TITLE", "AUTHOR", "DATE", "PUBLICATION", widths)
-
-	for i := 0; i< len(docs); i++ {
-		printColumns(docs[i][0], docs[i][1], docs[i][2], docs[i][3], docs[i][4], widths)
-	}
-}
-
-func printColumns(urn string, title string, author string,
-	year string, publication string, widths []int) {
-	var buf bytes.Buffer
-	buf.WriteString(padOrTruncateString(urn, widths[0]))
-	buf.WriteString("  ")
-	buf.WriteString(padOrTruncateString(title, widths[1]))
-	buf.WriteString("  ")
-	buf.WriteString(padOrTruncateString(author, widths[2]))
-	buf.WriteString("  ")
-	buf.WriteString(padOrTruncateString(year, widths[3]))
-	buf.WriteString("  ")
-	buf.WriteString(padOrTruncateString(publication, widths[4]))
-	fmt.Println(buf.String())
-}
-
-// Execute the search request against the API
-func search(args map[string]string) ([]byte, error) {
-	return api.GetDocs(args)
-}
-
-// Padding or truncate the string to ensure that it is the specified length
-func padOrTruncateString(str string, l int) string {
-	if l < 0 {
-		return str
-	} else if len(str) >= l {
-		return str[0:l-3] + "..."
-	} else {
-		return padRight(str, " ", l)
-	}
 }

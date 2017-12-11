@@ -5,10 +5,16 @@
 package cmd
 
 import (
+	"doc/bib"
+	"doc/utils"
 	"fmt"
 	"github.com/cavaliercoder/grab"
+	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -23,54 +29,95 @@ var getCmd = &cobra.Command{
 	Short: "Retrieve individual and collections of publications",
 	Long: `Download individual publications, and collections of publications to the current directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// if a URL is not provided as an arg then get the list of resources from the bib file and download them
-		getResource("")
+		// download resources from project file
+		resources := getProjectResources()
+		for path, url := range resources {
+			url = strings.Trim(url, "\"")
+			download(url, path)
+		}
+		fmt.Printf("\nDone")
 	},
 }
 
-// Get publication metadata
-func getMetadata () {}
+// Download the resource to the specified path.
+func download(url string, p string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(99)
+	}
 
-// Download the resource.
-func getResource(url string) {
+	dir := path.Join(cwd, "resources", p)
+	err = os.RemoveAll(dir)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(99)
+	}
+
+	err = utils.EnsureDirectory(filepath.Dir(dir))
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(99)
+	}
+
 	// create client
 	client := grab.NewClient()
-	req, _ := grab.NewRequest(".", "http://www.golang-book.com/public/pdf/gobook.pdf")
+	req, err := grab.NewRequest(dir, url)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(99)
+	}
 
 	// start download
-	fmt.Printf("Downloading %v...\n", req.URL())
+	fmt.Println("000 Downloading", req.URL())
 	resp := client.Do(req)
-	fmt.Printf("  %v\n", resp.HTTPResponse.Status)
 
-	// start UI loop
+	// display retrieval progress
 	t := time.NewTicker(500 * time.Millisecond)
 	defer t.Stop()
 
 	Loop:
 		for {
 			select {
-			case <-t.C:
-				fmt.Printf("  transferred %v / %v bytes (%.2f%%)\n",
-					resp.BytesComplete(),
-					resp.Size,
-					100*resp.Progress())
-
-			case <-resp.Done:
-				// download is complete
-				break Loop
+				case <- t.C:
+					fmt.Printf("\r000 Transferred %v/%v bytes (%.2f%%)",
+						resp.BytesComplete(),
+						resp.Size,
+						100 * resp.Progress())
+				case <- resp.Done:
+					break Loop // download complete
 			}
 		}
 
 	// check for errors
 	if err := resp.Err(); err != nil {
-		fmt.Fprintf(os.Stderr, "Download failed: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintln(os.Stderr, "ERR Download failed:", err)
+		os.Exit(99)
+	} else {
+		fmt.Println("000 Saved", resp.Filename)
 	}
 
-	fmt.Printf("Download saved to ./%v \n", resp.Filename)
+	return nil
 }
 
-func getResources (urns []string) {}
+// Get project resources
+func getProjectResources () map[string]string {
+	resources := make(map[string]string)
+
+	data, err := bib.Read()
+	if err != nil {
+		fmt.Println("Unable to read bib.json file")
+		os.Exit(90)
+	}
+	jsonParsed, _ := gabs.ParseJSON([]byte(data))
+
+	children, _ := jsonParsed.S("resources").ChildrenMap()
+	for key, child := range children {
+		resources[key] = child.String()
+	}
+
+	return resources
+}
 
 // Initialize the module.
 func init() {

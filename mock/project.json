@@ -1,0 +1,12 @@
+{
+  "name":"project name",
+  "description": "a great collection",
+  "resources": {
+    "arxiv/abs/1705.00002":"https://arxiv.org/abs/1705.00002",
+    "datapak/publisher/resource":"datapak.io/publisher/resource#v1.0.0"
+  },
+  "resourcez": [
+    "arxiv:1705.00002",
+    "datapak:something"
+  ]
+}

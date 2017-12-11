@@ -191,13 +191,13 @@ func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error)
 	meta.Records = []data.Record{}
 
 	// override defaults with user specified values
-	fmt.Print(ansi.Color("  Project or collection name: (Bibliography) ", "blue"))
+	fmt.Print(ansi.Color("  Project or collection name: (" + meta.Collection + ") ", "blue"))
 	name, _ := reader.ReadString('\n')
 	if name == "\n" {
 		name = "Bibliography"
 	}
 
-	fmt.Print(ansi.Color("  Description: (Project bibliography.) ", "blue"))
+	fmt.Print(ansi.Color("  Description: (" + meta.Description + ") ", "blue"))
 	desc, _ := reader.ReadString('\n')
 	if desc == "\n" {
 		desc = "Project bibliography."

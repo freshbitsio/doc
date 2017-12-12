@@ -39,6 +39,7 @@ type CollectionMetadata struct {
 	Records []Record `json:"records"`
 	Size uint `json:"size"`
 	Source string `json:"source"`
+	Resources map[string]string `json:"resources"`
 }
 
 // Identifier record

@@ -189,6 +189,7 @@ func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error)
 	meta.Created = time.Now().UTC().Format(time.RFC3339)
 	meta.Modified = time.Now().UTC().Format(time.RFC3339)
 	meta.Records = []data.Record{}
+	meta.Resources = make(map[string]string)
 
 	// override defaults with user specified values
 	fmt.Print(ansi.Color("  Project or collection name: (" + meta.Collection + ") ", "blue"))

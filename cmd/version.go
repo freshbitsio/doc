@@ -5,8 +5,8 @@
 package cmd
 
 import (
-	"doc/api"
-	"doc/data"
+	"freshbits.io/doc/api"
+	"freshbits.io/doc/data"
 	"fmt"
 	"github.com/spf13/cobra"
 )

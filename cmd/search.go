@@ -6,11 +6,11 @@ package cmd
 
 import (
 	"bytes"
-	"doc/api"
-	arxiv "doc/api/arxiv"
-	"doc/utils"
 	"errors"
 	"fmt"
+	"freshbits.io/doc/api"
+	"freshbits.io/doc/api/arxiv"
+	"freshbits.io/doc/utils"
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
 	"strings"

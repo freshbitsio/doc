@@ -6,10 +6,10 @@
 package cmd
 
 import (
-	"doc/api"
-	"doc/bib"
 	"errors"
 	"fmt"
+	"freshbits.io/doc/api"
+	"freshbits.io/doc/bib"
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
 	"time"

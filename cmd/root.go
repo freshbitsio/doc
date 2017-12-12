@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"github.com/mgutz/ansi"
+	"github.com/fatih/color"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,7 +30,7 @@ var VerboseOutput bool
 var RootCmd = &cobra.Command{
 	Use:   "doc",
 	Short: "The research publication manager",
-	Long: ansi.Color(longDescription, "blue"),
+	Long: color.BlueString(longDescription),
 	//Run: func(cmd *cobra.Command, args []string) { },
 }
 

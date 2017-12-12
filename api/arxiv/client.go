@@ -5,9 +5,9 @@
 package arxiv
 
 import (
-	"doc/api"
 	"encoding/xml"
 	"errors"
+	"freshbits.io/doc/api"
 	"github.com/fatih/color"
 	"github.com/ryanuber/columnize"
 	"io/ioutil"

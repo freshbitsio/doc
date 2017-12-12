@@ -9,12 +9,12 @@ package cmd
 
 import (
 	"bufio"
-	"doc/data"
-	"doc/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mgutz/ansi"
+	"freshbits.io/doc/data"
+	"freshbits.io/doc/utils"
+	"github.com/fatih/color"
 	"github.com/mitchellh/go-homedir"
 	"github.com/nu7hatch/gouuid"
 	"github.com/spf13/cobra"
@@ -74,7 +74,7 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Println("")
+		fmt.Println("\n")
 
 		err = utils.InitGitRepo(dir)
 		if err != nil {
@@ -192,19 +192,19 @@ func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error)
 	meta.Resources = make(map[string]string)
 
 	// override defaults with user specified values
-	fmt.Print(ansi.Color("  Project or collection name: (" + meta.Collection + ") ", "blue"))
+	fmt.Print(color.BlueString("  Project or collection name: (" + meta.Collection + ") "))
 	name, _ := reader.ReadString('\n')
 	if name == "\n" {
 		name = "Bibliography"
 	}
 
-	fmt.Print(ansi.Color("  Description: (" + meta.Description + ") ", "blue"))
+	fmt.Print(color.BlueString("  Description: (" + meta.Description + ") "))
 	desc, _ := reader.ReadString('\n')
 	if desc == "\n" {
 		desc = "Project bibliography."
 	}
 
-	fmt.Print(ansi.Color("  Owner: (" + username.Username +  ") ", "blue"))
+	fmt.Print(color.BlueString("  Owner: (" + username.Username +  ") "))
 	owner, _ := reader.ReadString('\n')
 	if owner == "\n" {
 		owner = username.Username
@@ -214,7 +214,7 @@ func promptForUserInput() (data.CollectionMetadata, data.UserPreferences, error)
 	meta.Description = desc
 	meta.Owner = owner
 
-	fmt.Print(ansi.Color("  Email: (" + username.Username + "@" + host + ") ", "blue"))
+	fmt.Print(color.BlueString("  Email: (" + username.Username + "@" + host + ") "))
 	email, _ := reader.ReadString('\n')
 	if email == "\n" {
 		email = username.Username + "@" + host
@@ -232,13 +232,13 @@ func promptForUserData () (data.UserPreferences, error) {
 	reader := bufio.NewReader(os.Stdin)
 	meta := data.UserPreferences{}
 
-	fmt.Print(ansi.Color("  Fullname: ", "blue"))
+	fmt.Print(color.BlueString("  Fullname: "))
 	fullname, err := reader.ReadString('\n')
 	if err != nil {
 		return meta, err
 	}
 
-	fmt.Print(ansi.Color("  Email: ", "blue"))
+	fmt.Print(color.BlueString("  Email: "))
 	email, err := reader.ReadString('\n')
 	if err != nil {
 		return meta, err

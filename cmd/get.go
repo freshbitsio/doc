@@ -5,9 +5,9 @@
 package cmd
 
 import (
-	"doc/bib"
-	"doc/utils"
 	"fmt"
+	"freshbits.io/doc/bib"
+	"freshbits.io/doc/utils"
 	"github.com/cavaliercoder/grab"
 	"github.com/fatih/color"
 	"github.com/Jeffail/gabs"
@@ -128,16 +128,4 @@ func getProjectResources () map[string]string {
 // Initialize the module.
 func init() {
 	RootCmd.AddCommand(getCmd)
-	//getCmd.SetUsageTemplate("This is the template")
-	//getCmd.PersistentFlags().BoolVarP(&save,"save",  "s", false, "Save document to project")
-	//getCmd.PersistentFlags().Uint8VarP(&depth,"depth",  "d", 0, "Retrieve cited references to specified depth. Maximum depth of three")
-}
-
-// Print the download status to the console
-func printStatus () {
-
-}
-
-func saveFile () (error) {
-	return nil
 }

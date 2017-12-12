@@ -16,6 +16,9 @@ Install all application dependencies:
 
     go get
 
+Install fpm and associated libraries to support release tasks. See fpm
+documentation at http://fpm.readthedocs.io/en/latest/installing.html
+
 
 ## Build
 
@@ -34,6 +37,9 @@ Run command unit tests:
 
     ./tasks/test
     
+
+## Release
+
     
 ## Contributing
 

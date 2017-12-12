@@ -1,7 +1,7 @@
 package api
 
 import (
-	"doc/data"
+	"freshbits.io/doc/data"
 )
 
 var apiClientVersions = data.ServiceApiEndpoint + "/clients"

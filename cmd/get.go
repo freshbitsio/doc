@@ -9,6 +9,7 @@ import (
 	"doc/utils"
 	"fmt"
 	"github.com/cavaliercoder/grab"
+	"github.com/fatih/color"
 	"github.com/Jeffail/gabs"
 	"github.com/spf13/cobra"
 	"os"
@@ -16,11 +17,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"strconv"
 )
 
 var depth uint8
 var downloadurl string
 //var queue []string
+var prefix = "  "
 var save bool
 
 // getCmd represents the get command
@@ -30,6 +33,7 @@ var getCmd = &cobra.Command{
 	Long: `Download individual publications, and collections of publications to the current directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// download resources from project file
+		fmt.Printf("\n")
 		resources := getProjectResources()
 		for path, url := range resources {
 			url = strings.Trim(url, "\"")
@@ -65,6 +69,7 @@ func download(url string, p string) error {
 
 	// create client
 	client := grab.NewClient()
+	client.UserAgent = "doc package manager/v0.1.0 (Darwin)"
 	req, err := grab.NewRequest(f, url)
 	if err != nil {
 		fmt.Println(err)
@@ -72,21 +77,18 @@ func download(url string, p string) error {
 	}
 
 	// start download
-	fmt.Println("000 Downloading", req.URL())
+	fmt.Printf("%vDownloading %v ", prefix, color.BlueString(url))
 	resp := client.Do(req)
 
 	// display retrieval progress
 	t := time.NewTicker(500 * time.Millisecond)
 	defer t.Stop()
-
 	Loop:
 		for {
 			select {
 				case <- t.C:
-					fmt.Printf("\r000 Transferred %v/%v bytes (%.2f%%)",
-						resp.BytesComplete(),
-						resp.Size,
-						100 * resp.Progress())
+					pct := strconv.FormatFloat(100 * resp.Progress(), 'f', 0, 64)
+					fmt.Printf("\r%vDownloading %v %v", prefix, color.BlueString(url), color.WhiteString("(" + pct + "%)"))
 				case <- resp.Done:
 					break Loop // download complete
 			}
@@ -94,10 +96,11 @@ func download(url string, p string) error {
 
 	// check for errors
 	if err := resp.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "ERR Download failed:", err)
+		fmt.Printf("%vDownloading %v %v", prefix, color.BlueString(url), "FAILED")
 		os.Exit(99)
 	} else {
-		fmt.Println("000 Saved", resp.Filename)
+		// resp.Filename
+		fmt.Printf("\r%vDownloading %v %v    \n", prefix, color.BlueString(url), color.WhiteString("DONE"))
 	}
 
 	return nil

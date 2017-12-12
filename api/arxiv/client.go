@@ -8,6 +8,7 @@ import (
 	"doc/api"
 	"encoding/xml"
 	"errors"
+	"github.com/fatih/color"
 	"github.com/ryanuber/columnize"
 	"io/ioutil"
 	"net/http"
@@ -98,7 +99,7 @@ func Print (feed Feed) {
 		if len(author) > 16 {
 			author = author[0:15-3] + "..."
 		}
- 		cols := []string{f.Id, title, f.Published[0:4], author, "journal name"}
+ 		cols := []string{color.BlueString(f.Id), title, f.Published[0:4], author, "journal name"}
 		row :=  strings.Join(cols, " | ")
 		data = append(data, row)
 	}

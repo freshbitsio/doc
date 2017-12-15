@@ -11,7 +11,7 @@ import (
 )
 
 // biblogCmd represents the biblog command
-var biblogCmd = &cobra.Command{
+var repoLogCmd = &cobra.Command{
 	Use:   "log",
 	Short: "Display the project change log",
 	Long: `Print the project's Git repository log to the screen.`,
@@ -23,13 +23,11 @@ var biblogCmd = &cobra.Command{
 // Print the repository log
 func printLog () {
 	// TODO should we first check to see if the current directory has a bib.json?
-	out, err := exec.Command("git", "log").Output()
-	if err != nil {
-	}
-	fmt.Printf("\n%s\n", out)
+	out, _ := exec.Command("git", "log").CombinedOutput()
+	fmt.Println(string(out))
 }
 
 // Initialize the module.
 func init() {
-	RootCmd.AddCommand(biblogCmd)
+	repoCmd.AddCommand(repoLogCmd)
 }

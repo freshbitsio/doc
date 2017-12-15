@@ -12,7 +12,7 @@ import (
 )
 
 // bibpullCmd represents the bibpull command
-var bibpullCmd = &cobra.Command{
+var repoPullCmd = &cobra.Command{
 	Use:   "pull",
 	Short: "Pull changes from the remote project repository",
 	Long: `Pull and merge changes from the remote Git repository.`,
@@ -23,14 +23,11 @@ var bibpullCmd = &cobra.Command{
 
 // Initialize the module.
 func init() {
-	bibCmd.AddCommand(bibpullCmd)
+	repoCmd.AddCommand(repoPullCmd)
 }
 
 // Pull changes from the remote repository.
 func pullChanges () {
-	// TODO should we first check to see if the current directory has a bib.json?
-	out, err := exec.Command("git", "log").Output()
-	if err != nil {
-	}
-	fmt.Printf("\n%s\n", out)
+	out, _ := exec.Command("git", "pull").CombinedOutput()
+	fmt.Println(string(out))
 }

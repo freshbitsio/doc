@@ -56,7 +56,7 @@ var initCmd = &cobra.Command{
 		// TODO is it an existing git repo?
 		// TODO are you sure you want to init?
 		fmt.Println(`
-  This utility will create a new bib.json file in the current directory and
+  doc will create a new bib.json file in the current directory and
   then ask you to provide values for a minimum number of fields. We'll try to
   use some sensible defaults for the remainder.
 

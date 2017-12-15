@@ -32,7 +32,7 @@ Display the revision history for this project:
     doc log
 
 For more information about the doc command, please visit the
-[doc website](https://datapak.io/opensource/doc).
+[doc website](https://getdoc.io).
 
 
 ## License

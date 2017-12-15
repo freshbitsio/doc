@@ -1,3 +1,5 @@
 #!/bin/bash
 DIR="$( cd "$(dirname "$0")/../" ; pwd -P)"
+
+sudo rm -fr ~/src/go/bin/doc
 sudo cp -f $DIR/build/doc ~/src/go/bin/doc

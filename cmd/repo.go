@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
-// Bib command module
-// This module manages changes to the bibliography file.
+// Repo command module
+// This module manages changes to the project repository.
 //-----------------------------------------------------------------------------
 package cmd
 
@@ -9,9 +9,9 @@ import (
 )
 
 // bibCmd represents the bib command
-var bibCmd = &cobra.Command{
-	Use:   "bib",
-	Short: "A brief description of your command",
+var repoCmd = &cobra.Command{
+	Use:   "repo",
+	Short: "Manage the project repository",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -24,5 +24,5 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	RootCmd.AddCommand(bibCmd)
+	RootCmd.AddCommand(repoCmd)
 }
